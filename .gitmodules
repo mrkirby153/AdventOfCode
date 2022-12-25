@@ -1,0 +1,6 @@
+[submodule "2021"]
+	path = 2021
+	url = https://github.com/mrkirby153/AdventOfCode2021
+[submodule "2022"]
+	path = 2022
+	url = https://github.com/mrkirby153/AdventOfCode2022
