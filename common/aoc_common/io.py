@@ -1,17 +1,21 @@
 import re
 
+
 def to_2d_matrix(raw_input, mapper=None):
     """
     Reads a raw input into a 2d matrix
     """
     return [[y if mapper is None else mapper(y) for y in x] for x in raw_input]
 
+
 def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
     """
     Prints out a 2d matrix
     """
+
     def _map(val):
         return val if mapper is None else mapper(val)
+
     max_width = 0
     if pad:
         raw = [_map(y) for x in matrix for y in x]
@@ -27,11 +31,15 @@ def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
                 row_str += " "
         print_func(row_str)
 
-_number_regex = re.compile(r"\d+(?:\.\d+)?")
 
-def numbers(line):
+_number_regex = re.compile(r"\d+(?:\.\d+)?")
+_single_number_regex = re.compile(r"\d")
+
+
+def numbers(line, single=False):
     """
-    Extracts all numbers from the given line of text
+    Extracts all numbers from the given line of text. Pass `single` to only extract single digit numbers.
     """
-    groups = _number_regex.findall(line)
-    return [int(number) if '.' not in number else float(number) for number in groups]
+    regex = _single_number_regex if single else _number_regex
+    groups = regex.findall(line)
+    return [int(number) if "." not in number else float(number) for number in groups]
