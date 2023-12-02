@@ -2,6 +2,8 @@ from aoc_common import get_puzzle_input, run, sprint
 from aoc_common.benchmark import print_timings
 from aoc_common.io import numbers
 import re
+from functools import reduce
+import operator
 
 input_data = get_puzzle_input()
 
@@ -39,6 +41,18 @@ def is_game_valid(game, max_cubes):
     return True
 
 
+def optimize_game(game):
+    game_id, rounds = game
+    sprint(f"Optimizing game {game_id}")
+    max_cubes = {"red": 0, "green": 0, "blue": 0}
+    for round in rounds:
+        sprint(f"Optimizing round {round}")
+        for count, color in round:
+            if count > max_cubes[color]:
+                max_cubes[color] = count
+    return max_cubes
+
+
 @print_timings
 def part_1():
     data = process_input(input_data)
@@ -63,7 +77,16 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    data = process_input(input_data)
+
+    total_power = 0
+    for game in data:
+        optimized = optimize_game(game)
+        sprint(f"Game {game[0]} optimized: {optimized}")
+        power = reduce(operator.mul, optimized.values())
+        sprint(f"Game {game[0]} power: {power}")
+        total_power += power
+    return total_power
 
 
 run(part_1, part_2)
