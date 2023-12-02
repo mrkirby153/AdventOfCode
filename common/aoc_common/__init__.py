@@ -12,6 +12,12 @@ parser.add_argument(
 parser.add_argument(
     "--two", "-2", help="Run only part 2", action="store_true", default=False
 )
+parser.add_argument(
+    "--verbose",
+    "-v",
+    help="Verbose output (sprint for real input)",
+    action="store_true",
+)
 parsed_args = parser.parse_args()
 
 
@@ -19,7 +25,7 @@ def sprint(*args, **kwargs):
     """
     Print output only when running the sample
     """
-    if parsed_args.sample:
+    if parsed_args.sample or parsed_args.verbose:
         print(*args, **kwargs)
 
 
