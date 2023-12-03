@@ -8,22 +8,33 @@ def to_2d_matrix(raw_input, mapper=None):
     return [[y if mapper is None else mapper(y) for y in x] for x in raw_input]
 
 
+def as_complex_matrix_dict(matrix):
+    """
+    Converts a matrix into a dict of complex numbers to values with 0, 0 being the top left
+    """
+    return {
+        complex(x, y): matrix[y][x]
+        for y in range(len(matrix))
+        for x in range(len(matrix[y]))
+    }
+
+
 def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
     """
     Prints out a 2d matrix
     """
 
-    def _map(val):
-        return val if mapper is None else mapper(val)
+    def _map(point, val):
+        return val if mapper is None else mapper(point, val)
 
     max_width = 0
     if pad:
         raw = [_map(y) for x in matrix for y in x]
         max_width = max([len(x) for x in raw])
-    for row in matrix:
+    for y, row in enumerate(matrix):
         row_str = ""
-        for col in row:
-            value = str(_map(col))
+        for x, col in enumerate(row):
+            value = str(_map(complex(x, y), col))
             while pad and len(value) < max_width:
                 value = f" {value}"
             row_str += value
