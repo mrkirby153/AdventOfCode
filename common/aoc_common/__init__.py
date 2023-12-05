@@ -18,6 +18,7 @@ parser.add_argument(
     help="Verbose output (sprint for real input)",
     action="store_true",
 )
+parser.add_argument("--quiet", "-q", help="Don't sprint ever", action="store_true")
 parsed_args = parser.parse_args()
 
 
@@ -25,6 +26,8 @@ def sprint(*args, **kwargs):
     """
     Print output only when running the sample
     """
+    if parsed_args.quiet:
+        return
     if parsed_args.sample or parsed_args.verbose:
         print(*args, **kwargs)
 

@@ -2,6 +2,7 @@ from aoc_common import get_puzzle_input, run, sprint
 from aoc_common.benchmark import print_timings
 from aoc_common.io import numbers
 from aoc_common.ansi import colorize, RED
+from collections import deque
 
 input_data = get_puzzle_input()
 
@@ -20,7 +21,7 @@ def load_input(input_data):
 
     current_loc = None
     for line in input_data[1:]:
-        sprint("Processing line", line)
+        # sprint("Processing line", line)
         if line.endswith("map:"):
             current_loc = locations[line.split()[0]]
             assert current_loc is not None, f"No location found for {current_loc}"
@@ -93,9 +94,109 @@ def part_1():
     return min(seeds)
 
 
+def expand_seeds(seeds):
+    ranges = []
+    for i in range(0, len(seeds), 2):
+        start = seeds[i]
+        amount = seeds[i + 1]
+        ranges.append(range(start, start + amount))
+    return ranges
+
+
+def partially_contained(range_one, range_two):
+    x1, x2 = range_one.start, range_one.stop
+    y1, y2 = range_two.start, range_two.stop
+    return x1 <= y2 and y1 <= x2
+
+
+def map_range(mapping, candidate_range):
+    sprint("Mapping", candidate_range, "against", mapping)
+    dest = mapping[0]
+    start = mapping[1]
+    size = mapping[2]
+    stop = start + size - 1
+
+    offset = start - dest
+    if not partially_contained(
+        candidate_range, range(start, stop)
+    ) and not partially_contained(range(start, stop), candidate_range):
+        sprint("Ranges do not overlap")
+        return None, None
+    if candidate_range.start >= start and candidate_range.stop <= stop:
+        # The range is completely within this mapping
+        sprint("Range is completely within this mapping")
+        return (
+            range(candidate_range.start - offset, candidate_range.stop - offset),
+            None,
+        )
+    elif candidate_range.start >= start and candidate_range.stop >= stop:
+        # The range starts within this mapping and ends after it. Split the range into two ranges
+        result = (
+            range(candidate_range.start - offset, stop - offset + 1),
+            range(stop + 1, candidate_range.stop),
+        )
+        sprint("Range starts within this mapping and ends after it, mapped to", result)
+        return result
+    elif candidate_range.start <= start and candidate_range.stop <= stop:
+        # The range starts before the mapping and ends within it. Split the range into two ranges
+        result = (
+            range(start - offset, candidate_range.stop - offset),
+            range(candidate_range.start, start - 1),
+        )
+        sprint("Range starts before the mapping and ends within it, mapped to", result)
+        return result
+    else:
+        # The range does not overlap with this mapping. Just return the range as-is
+        sprint("Range does not overlap with this mapping")
+        return None, None
+
+
+def do_mapping(mappings, candidate_range):
+    queue = deque([candidate_range])
+    mapped_ranges = []
+
+    while queue:
+        to_process = queue.popleft()
+        sprint("Processing", to_process)
+        found = False
+        for mapping in mappings:
+            new_range, unprocessed = map_range(mapping, to_process)
+            if new_range:
+                found = True
+                sprint("Mapped", to_process, "to", new_range)
+                mapped_ranges.append(new_range)
+            if unprocessed:
+                sprint("Unprocessed:", unprocessed)
+                queue.append(unprocessed)
+        if not found:
+            sprint("Processed range and found no mappings")
+            mapped_ranges.append(to_process)
+    return mapped_ranges
+
+
 @print_timings
 def part_2():
-    pass
+    seeds, locations = load_input(input_data)
+    sprint("Seeds:", locations)
+
+    ranges = expand_seeds(seeds)
+
+    for mapping in [
+        "seed-to-soil",
+        "soil-to-fertilizer",
+        "fertilizer-to-water",
+        "water-to-light",
+        "light-to-temperature",
+        "temperature-to-humidity",
+        "humidity-to-location",
+    ]:
+        lookup_table = locations[mapping]
+        new_ranges = []
+        for r in ranges:
+            new_ranges.extend(do_mapping(lookup_table, r))
+        print(new_ranges, mapping)
+        ranges = new_ranges
+    return min(map(lambda x: x.start, ranges))
 
 
 run(part_1, part_2)
