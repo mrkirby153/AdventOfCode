@@ -19,7 +19,12 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument("--quiet", "-q", help="Don't sprint ever", action="store_true")
+parser.add_argument("--year", "-y", help="Year of the puzzle")
+parser.add_argument("--day", "-d", help="Day of the puzzle")
+
 parsed_args = parser.parse_args()
+
+settings = {"year": None, "day": None}
 
 
 def sprint(*args, **kwargs):
@@ -34,15 +39,24 @@ def sprint(*args, **kwargs):
 
 @cache
 def get_puzzle_input():
+    file_path = (
+        f"{settings['year']}/day{settings['day']:02}" if settings["year"] else None
+    )
+
     if parsed_args.file:
         file_name = parsed_args.file
     else:
         file_name = "input.txt" if not parsed_args.sample else "sample.txt"
-    with open(file_name) as f:
+
+    file = f"{file_path}/{file_name}" if file_path else file_name
+
+    with open(file) as f:
         return [x.replace("\n", "") for x in f.readlines()]
 
 
 def run(part_1, part_2):
+    if __name__ != "__main__":
+        return
     if not parsed_args.one and not parsed_args.two:
         print(f"Part 1: {part_1()}")
         print(f"Part 2: {part_2()}")
