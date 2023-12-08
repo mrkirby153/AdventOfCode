@@ -21,6 +21,7 @@ parser.add_argument(
 parser.add_argument("--quiet", "-q", help="Don't sprint ever", action="store_true")
 parser.add_argument("--year", "-y", help="Year of the puzzle")
 parser.add_argument("--day", "-d", help="Day of the puzzle")
+parser.add_argument("--force", help="Force run", action="store_true")
 
 parsed_args = parser.parse_args()
 
@@ -55,7 +56,7 @@ def get_puzzle_input():
 
 
 def run(part_1, part_2):
-    if __name__ != "__main__":
+    if __name__ != "__main__" and not parsed_args.force:
         return
     if not parsed_args.one and not parsed_args.two:
         print(f"Part 1: {part_1()}")
