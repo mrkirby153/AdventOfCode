@@ -54,7 +54,7 @@ def numbers(line, single=False, with_negatives=True):
     Extracts all numbers from the given line of text. Pass `single` to only extract single digit numbers.
     """
     single_re = (
-        _negative_number_regex if with_negatives else _negative_single_number_regex
+        _negative_single_number_regex if with_negatives else _single_number_regex
     )
     number_re = _negative_number_regex if with_negatives else _number_regex
 
