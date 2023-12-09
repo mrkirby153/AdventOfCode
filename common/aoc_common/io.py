@@ -43,8 +43,8 @@ def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
         print_func(row_str)
 
 
-_number_regex = re.compile(r"\d+(?:\.\d+)?")
-_single_number_regex = re.compile(r"\d")
+_number_regex = re.compile(r"-?\d+(?:\.\d+)?")
+_single_number_regex = re.compile(r"-?\d")
 
 
 def numbers(line, single=False):

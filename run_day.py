@@ -1,9 +1,8 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 from aoc_common import parsed_args, settings
 from importlib import import_module
 import datetime
 from pytz import timezone
-from aocd.models import Puzzle
 
 
 def get_year_and_day():
