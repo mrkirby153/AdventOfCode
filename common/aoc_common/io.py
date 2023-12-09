@@ -43,14 +43,21 @@ def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
         print_func(row_str)
 
 
-_number_regex = re.compile(r"-?\d+(?:\.\d+)?")
-_single_number_regex = re.compile(r"-?\d")
+_number_regex = re.compile(r"\d+(?:\.\d+)?")
+_negative_number_regex = re.compile(r"-?\d+(?:\.\d+)?")
+_single_number_regex = re.compile(r"\d")
+_negative_single_number_regex = re.compile(r"-?\d")
 
 
-def numbers(line, single=False):
+def numbers(line, single=False, with_negatives=True):
     """
     Extracts all numbers from the given line of text. Pass `single` to only extract single digit numbers.
     """
-    regex = _single_number_regex if single else _number_regex
+    single_re = (
+        _negative_number_regex if with_negatives else _negative_single_number_regex
+    )
+    number_re = _negative_number_regex if with_negatives else _number_regex
+
+    regex = single_re if single else number_re
     groups = regex.findall(line)
     return [int(number) if "." not in number else float(number) for number in groups]
