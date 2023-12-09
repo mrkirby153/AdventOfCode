@@ -46,9 +46,23 @@ def extrapolate_sequence(sequence):
     return sequence
 
 
-def process_sequence(sequence):
+def extrapolate_sequence_rev(sequence):
+    assert is_terminal(sequence[-1]), "Sequence must be terminal"
+    sequence = sequence.copy()
+    sequence[-1].append(0)
+
+    for i in range(len(sequence) - 2, -1, -1):
+        row = sequence[i]
+        prev = sequence[i + 1]
+        sprint("Row", row, "Prev", prev)
+        next_seq = row[0] - prev[0]
+        row.insert(0, next_seq)
+    return sequence
+
+
+def process_sequence(sequence, extrapolator=extrapolate_sequence):
     expanded = expand_sequence(sequence)
-    extrapolated = extrapolate_sequence(expanded)
+    extrapolated = extrapolator(expanded)
     return extrapolated
 
 
@@ -69,7 +83,14 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    total = 0
+    sequences = load_input(input_data)
+    for sequence in sequences:
+        sprint("Processing sequence", sequence)
+        extrapolated = process_sequence(sequence, extrapolate_sequence_rev)[0]
+        sprint("Result", extrapolated)
+        total += extrapolated[0]
+    return total
 
 
 run(part_1, part_2)
