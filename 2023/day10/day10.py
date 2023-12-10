@@ -168,10 +168,58 @@ def part_1():
 
 
 def get_shape_of_start(data, start):
-    if parsed_args.sample:
-        return "F"
-    else:
+    # |
+    if (
+        start + 1j in data
+        and data[start + 1j] in "|LJ"
+        and start - 1j in data
+        and data[start - 1j] in "|7F"
+    ):
+        return "|"
+
+    # -
+    if (
+        start - 1 in data
+        and data[start - 1] in "-FL"
+        and start + 1 in data
+        and data[start + 1] in "-J7"
+    ):
+        return "-"
+
+    # L
+    if (
+        start - 1j in data
+        and data[start - 1j] in "|F7"
+        and start + 1 in data
+        and data[start + 1] in "-7J"
+    ):
+        return "L"
+    # J
+    if (
+        start - 1j in data
+        and data[start - 1j] in "|F7"
+        and start - 1 in data
+        and data[start - 1] in "-LF"
+    ):
+        return "J"
+    # 7
+    if (
+        start + 1j in data
+        and data[start + 1j] in "|LJ"
+        and start - 1 in data
+        and data[start - 1] in "-FL"
+    ):
         return "7"
+    # F
+    if (
+        start + 1j in data
+        and data[start + 1j] in "|LJ"
+        and start + 1 in data
+        and data[start + 1] in "-J7"
+    ):
+        return "F"
+
+    assert False, f"Could not determine shape of start {start}"
 
 
 def count_inside_on_expanded(data):
@@ -254,20 +302,16 @@ def get_inside_count(data, points):
         if point in points:
             new_data[point] = value
     doubled = double_resolution(new_data)
-
-    min_x, min_y = (
-        int(min(doubled, key=lambda x: x.real).real),
-        int(min(doubled, key=lambda x: x.imag).imag),
-    )
     max_x, max_y = (
         int(max(doubled, key=lambda x: x.real).real),
         int(max(doubled, key=lambda x: x.imag).imag),
     )
 
+    # Flood fill from the outside corners
     start_points = [
-        complex(min_x - 1, min_y - 1),
-        complex(min_x - 1, max_y + 1),
-        complex(max_x + 1, min_y - 1),
+        complex(-1, -1),
+        complex(-1, max_y + 1),
+        complex(max_x + 1, -1),
         complex(max_x + 1, max_y + 1),
     ]
 
@@ -283,10 +327,10 @@ def get_inside_count(data, points):
         next = neighbors(point)
         for p in next:
             if (
-                p.real < min_x - 1
-                or p.real > max_x + 1
-                or p.imag < min_y - 1
-                or p.imag > max_y + 1
+                p.real < 0 - 1
+                or p.real > max_x + 2
+                or p.imag < 0 - 1
+                or p.imag > max_y + 2
             ):
                 continue
             if doubled.get(p, ".") == ".":
@@ -301,31 +345,19 @@ def get_inside_count(data, points):
         int(max(data, key=lambda x: x.imag).imag),
     )
 
+    # Figure out how many original points are not reachable from the outside
+
+    # Translate from the original resolution to the doubled resolution
     original_points = []
     for y in range(orig_min_y, orig_max_y + 1):
         for x in range(orig_min_x, orig_max_x + 1):
             point = complex(x * 2, y * 2)
             original_points.append(point)
 
-    i = 0
-    for y in range(min_y, max_y + 2):
-        for x in range(min_x, max_x + 2):
-            point = complex(x, y)
-            color = RED if point in original_points else ""
-
-            symbol = (
-                "O"
-                if point in outside_points
-                else BOXDRAW_CHARACTERS[doubled.get(point, ".")]
-            )
-            if (
-                point in original_points
-                and point not in outside_points
-                and doubled.get(point, ".") == "."
-            ):
-                i += 1
-            sprint(colorize(symbol, color), end="")
-        sprint()
+    # Get the values at the original points that are not marked as outside and count how many are "." (not a pipe)
+    i = [doubled.get(p, ".") for p in original_points if p not in outside_points].count(
+        "."
+    )
 
     return i
 
