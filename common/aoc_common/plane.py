@@ -7,3 +7,10 @@ def neighbors(point, diagonal=False):
     if diagonal:
         points.extend([point + 1 + 1j, point + 1 - 1j, point - 1 + 1j, point - 1 - 1j])
     return points
+
+
+def manhattan(n1: complex, n2: complex) -> int:
+    """
+    Returns the manhattan distance between two points.
+    """
+    return int(abs(n1.real - n2.real) + abs(n1.imag - n2.imag))

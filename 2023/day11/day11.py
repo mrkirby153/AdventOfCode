@@ -1,7 +1,9 @@
+from itertools import combinations
+
 from aoc_common import get_puzzle_input, run, sprint
 from aoc_common.benchmark import print_timings
 from aoc_common.io import as_complex_matrix_dict, to_2d_matrix
-from itertools import combinations
+from aoc_common.plane import manhattan
 
 input_data = get_puzzle_input()
 
@@ -53,7 +55,7 @@ def expand_universe(data, times=1):
     horiz_map = {x: x for x in horizontal_empty_rows}
 
     for horiz in horizontal_empty_rows:
-        print("Expanding row", horiz, horiz_map[horiz])
+        sprint("Expanding row", horiz, horiz_map[horiz])
         horiz = horiz_map[horiz]  # Account for the fact that we're adding rows
         new_data = {}
         # Move all points below this row down n times
@@ -79,7 +81,7 @@ def expand_universe(data, times=1):
     # Expand all vertical rows
     vert_map = {x: x for x in vertical_empty_rows}
     for vert in vertical_empty_rows:
-        print("Expanding column", vert, vert_map[vert])
+        sprint("Expanding column", vert, vert_map[vert])
         original_vert = vert
         vert = vert_map[vert]
         new_data = {}
@@ -115,10 +117,6 @@ def map_pairs(data):
     return numbered_points, list(combinations(numbered_points.keys(), 2))
 
 
-def get_distance_between_points(point1, point2):
-    return int(abs(point1.real - point2.real) + abs(point1.imag - point2.imag))
-
-
 @print_timings
 def part_1():
     data = load_data(input_data)
@@ -128,7 +126,7 @@ def part_1():
 
     distance = 0
     for p1, p2 in combinations:
-        distance += get_distance_between_points(points[p1], points[p2])
+        distance += manhattan(points[p1], points[p2])
     return distance
 
 
@@ -142,8 +140,8 @@ def part_2():
 
     distance = 0
     for p1, p2 in combinations:
-        distance += get_distance_between_points(points[p1], points[p2])
+        distance += manhattan(points[p1], points[p2])
     return distance
 
 
-run(part_1, part_2)
+run(part_1, part_2, __name__)

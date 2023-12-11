@@ -14,4 +14,4 @@ def part_2():
     pass
 
 
-run(part_1, part_2)
+run(part_1, part_2, __name__)

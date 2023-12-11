@@ -55,8 +55,8 @@ def get_puzzle_input():
         return [x.replace("\n", "") for x in f.readlines()]
 
 
-def run(part_1, part_2):
-    if __name__ != "__main__" and not parsed_args.force:
+def run(part_1, part_2, name=None):
+    if name != "__main__" and not parsed_args.force:
         return
     if not parsed_args.one and not parsed_args.two:
         print(f"Part 1: {part_1()}")
