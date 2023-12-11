@@ -10,7 +10,13 @@ def load_data(input_data):
     return as_complex_matrix_dict(to_2d_matrix(input_data))
 
 
-def expand_universe(data):
+def expand_universe(data, times=1):
+    data2 = {}
+    for k, v in data.items():
+        if v != ".":
+            data2[k] = v
+    total_points = len(data2.keys())  # Keep track so we don't lose any
+    data = data2
     min_x, max_x = int(min(p.real for p in data)), int(max(p.real for p in data))
     min_y, max_y = int(min(p.imag for p in data)), int(max(p.imag for p in data))
 
@@ -33,7 +39,7 @@ def expand_universe(data):
             point = complex(x, y)
             if point not in data:
                 continue
-            print(point, data[point])
+            sprint(point, data[point])
             if data[point] != ".":
                 valid = False
         if valid:
@@ -47,51 +53,55 @@ def expand_universe(data):
     horiz_map = {x: x for x in horizontal_empty_rows}
 
     for horiz in horizontal_empty_rows:
-        sprint("Expanding row", horiz)
+        print("Expanding row", horiz, horiz_map[horiz])
         horiz = horiz_map[horiz]  # Account for the fact that we're adding rows
-        new_data = dict(data)
-        # Move all points below this row down by one
-        for y in range(horiz, max_y + 1):
-            for x in range(min_x, max_x + 1):
-                point = complex(x, y)
-                if point not in data:
-                    continue
-                new_data[point + 1j] = data[point]
+        new_data = {}
+        # Move all points below this row down n times
+        for point, value in data.items():
+            x, y = int(point.real), int(point.imag)
+            if y < horiz:
+                new_data[point] = value  # Does not change
+            else:
+                new_data[point + complex(0, times)] = value
         # Increase max_y
-        max_y += 1
+        max_y += times
+        assert (
+            len(new_data.keys()) == total_points
+        ), f"Lost points: Expected {total_points}, got {len(new_data.keys())}"
         # Update data
         data = new_data
 
         # Adjust horiz_map and increase all values above this row by one
         for row in horiz_map:
-            if row > horiz:
-                horiz_map[row] += 1
+            if horiz_map[row] > horiz:
+                horiz_map[row] += times
 
     # Expand all vertical rows
     vert_map = {x: x for x in vertical_empty_rows}
     for vert in vertical_empty_rows:
-        sprint("Expanding column", vert)
+        print("Expanding column", vert, vert_map[vert])
+        original_vert = vert
         vert = vert_map[vert]
-        new_data = dict(data)
-        for x in range(vert, max_x + 1):
-            for y in range(min_y, max_y + 1):
-                point = complex(x, y)
-                if point not in data:
-                    continue
-                new_data[point + 1] = data[point]
-        max_x += 1
+        new_data = {}
+        for point, value in data.items():
+            x, y = int(point.real), int(point.imag)
+            if x < vert:
+                new_data[point] = value
+            else:
+                new_data[point + complex(times, 0)] = value
+        max_x += times
         data = new_data
 
         for col in vert_map:
-            if col > vert:
-                vert_map[col] += 1
+            if vert_map[col] > vert:
+                vert_map[col] += times
+        # print("vert", vert_map)
 
-    for y in range(min_y, max_y + 1):
-        for x in range(min_x, max_x + 1):
-            point = complex(x, y)
-            assert point in data, f"Point {point} not in data"
-            sprint(data[point], end="")
-        sprint()
+    # for y in range(min_y, max_y + 1):
+    #     for x in range(min_x, max_x + 1):
+    #         point = complex(x, y)
+    #         sprint(data.get(point, "."), end="")
+    #     sprint()
     return data
 
 
@@ -116,13 +126,6 @@ def part_1():
     data = expand_universe(data)
     points, combinations = map_pairs(data)
 
-    # shortest = {}
-    # for p1, p2 in combinations:
-    #     distance = get_distance_between_points(points[p1], points[p2])
-    #     shortest[p1] = min(shortest.get(p1, 99999999), distance)
-    #     shortest[p2] = min(shortest.get(p2, 99999999), distance)
-    # print(shortest)
-    # return sum(shortest.values())
     distance = 0
     for p1, p2 in combinations:
         distance += get_distance_between_points(points[p1], points[p2])
@@ -131,7 +134,16 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    data = load_data(input_data)
+
+    actual = 1_000_000 - 1
+    data = expand_universe(data, actual)
+    points, combinations = map_pairs(data)
+
+    distance = 0
+    for p1, p2 in combinations:
+        distance += get_distance_between_points(points[p1], points[p2])
+    return distance
 
 
 run(part_1, part_2)
