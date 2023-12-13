@@ -31,36 +31,9 @@ def get_row(pattern, row):
     return [pattern[complex(x, row)] for x in range(0, max_x)]
 
 
-def find_vertical_reflection(pattern):
-    # Go pairwise through the pattern and check for two rows that are the same
-    max_x = max([int(x.real) for x in pattern.keys()])
-    max_y = max([int(x.imag) for x in pattern.keys()])
-
-    is_odd = (max_x + 1) % 2 == 1
-    for x in range(0, max_x):
-        sprint()
-        # Get the two rows
-        row_1 = get_column(pattern, x)
-        row_2 = get_column(pattern, x + 1)
-        sprint(x, row_1)
-        sprint(x + 1, row_2)
-        if row_1 == row_2:
-            sprint("Found vertical reflection candidate at rows", x, x + 1)
-
-            left_trace, right_trace = x, x + 1
-            valid = True
-            while left_trace >= 0 and right_trace <= max_x:
-                if list(get_column(pattern, left_trace)) != list(
-                    get_column(pattern, right_trace)
-                ):
-                    sprint("not valid")
-                    valid = False
-                    break
-                left_trace -= 1
-                right_trace += 1
-            if valid:
-                return x
-    return None
+def find_differences(pattern_1, pattern_2):
+    assert len(pattern_1) == len(pattern_2)
+    return sum([1 for x in range(len(pattern_1)) if pattern_1[x] != pattern_2[x]])
 
 
 def print_pattern(pattern, print_func=sprint):
@@ -70,35 +43,41 @@ def print_pattern(pattern, print_func=sprint):
         print_func("".join([pattern[x + y * 1j] for x in range(0, max_x)]))
 
 
-def find_horizontal_reflection(pattern):
-    max_x = max([int(x.real) for x in pattern.keys()])
+def find_h_reflection(pattern, max_differences=0):
     max_y = max([int(x.imag) for x in pattern.keys()])
 
-    is_odd = (max_y + 1) % 2 == 1
-
     for y in range(0, max_y):
-        sprint()
-        row_1 = list(get_row(pattern, y))
-        row_2 = list(get_row(pattern, y + 1))
-        sprint(row_1)
-        sprint(row_2)
-        if row_1 == row_2:
-            sprint("Found horizontal reflection candidate at rows", y, y + 1)
+        top_trace, bottom_trace = y, y + 1
+        differences = 0
+        while top_trace >= 0 and bottom_trace <= max_y:
+            r1 = get_row(pattern, top_trace)
+            r2 = get_row(pattern, bottom_trace)
+            d = find_differences(r1, r2)
+            differences += d
 
-            top_trace, bottom_trace = y, y + 1
-            valid = True
+            top_trace -= 1
+            bottom_trace += 1
+        if differences == max_differences:
+            return y
+    return None
 
-            while top_trace >= 0 and bottom_trace <= max_y:
-                if list(get_row(pattern, top_trace)) != list(
-                    get_row(pattern, bottom_trace)
-                ):
-                    sprint("not valid")
-                    valid = False
-                    break
-                top_trace -= 1
-                bottom_trace += 1
-            if valid:
-                return y
+
+def find_v_reflection(pattern, max_differences=0):
+    max_x = max([int(x.real) for x in pattern.keys()])
+
+    for x in range(0, max_x):
+        left_trace, right_trace = x, x + 1
+        differences = 0
+        while left_trace >= 0 and right_trace <= max_x:
+            c1 = get_column(pattern, left_trace)
+            c2 = get_column(pattern, right_trace)
+            d = find_differences(c1, c2)
+            differences += d
+
+            left_trace -= 1
+            right_trace += 1
+        if differences == max_differences:
+            return x
     return None
 
 
@@ -108,13 +87,12 @@ def part_1():
 
     acc = 0
     for i, pattern in enumerate(patterns):
-        vert = find_vertical_reflection(pattern)
-        horz = find_horizontal_reflection(pattern)
+        vert = find_v_reflection(pattern)
+        horz = find_h_reflection(pattern)
         if vert is not None and horz is not None:
             print(f"PATTERN {i} HAS BOTH REFLECTIONS", vert, horz)
             print_pattern(pattern, print)
             return
-        print(vert, horz)
         if vert is not None:
             acc += vert + 1
         elif horz is not None:
@@ -128,7 +106,28 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    patterns = load_data(input_data)
+
+    pattern = patterns[0]
+    print_pattern(pattern, print)
+
+    acc = 0
+    for i, pattern in enumerate(patterns):
+        vert = find_v_reflection(pattern, 1)
+        horz = find_h_reflection(pattern, 1)
+        if vert is not None and horz is not None:
+            print(f"PATTERN {i} HAS BOTH REFLECTIONS", vert, horz)
+            print_pattern(pattern, print)
+            return
+        if vert is not None:
+            acc += vert + 1
+        elif horz is not None:
+            acc += (horz + 1) * 100
+        else:
+            print(f"PATTERN {i} HAS NO REFLECTIONS")
+            print_pattern(pattern, print)
+            return
+    return acc
 
 
 run(part_1, part_2, __name__)
