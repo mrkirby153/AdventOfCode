@@ -49,17 +49,7 @@ def find_vertical_reflection(pattern):
 
             left_trace, right_trace = x, x + 1
             valid = True
-            while valid:
-                print("left", left_trace, "right", right_trace)
-                print("max", max_x)
-                if right_trace == max_x:
-                    allowed_top = 1 if is_odd else 0
-                    print("allowed top", allowed_top)
-                    return x if left_trace == allowed_top else None
-                if left_trace == 0:
-                    valid = False
-                    break
-
+            while left_trace >= 0 and right_trace <= max_x:
                 if list(get_column(pattern, left_trace)) != list(
                     get_column(pattern, right_trace)
                 ):
@@ -68,6 +58,8 @@ def find_vertical_reflection(pattern):
                     break
                 left_trace -= 1
                 right_trace += 1
+            if valid:
+                return x
     return None
 
 
@@ -96,18 +88,7 @@ def find_horizontal_reflection(pattern):
             top_trace, bottom_trace = y, y + 1
             valid = True
 
-            while valid:
-                print("top", top_trace, "bottom", bottom_trace)
-                print("max", max_y)
-                if bottom_trace == max_y:
-                    # At the bottom of the pattern, if this pattern is odd, we can ignore the first row
-                    allowed_top = 1 if is_odd else 0
-                    print("allowed top", allowed_top)
-                    return y if top_trace == allowed_top else None
-                if top_trace == 0:
-                    valid = False
-                    break
-
+            while top_trace >= 0 and bottom_trace <= max_y:
                 if list(get_row(pattern, top_trace)) != list(
                     get_row(pattern, bottom_trace)
                 ):
@@ -116,28 +97,24 @@ def find_horizontal_reflection(pattern):
                     break
                 top_trace -= 1
                 bottom_trace += 1
+            if valid:
+                return y
     return None
 
 
 @print_timings
 def part_1():
     patterns = load_data(input_data)
-    # t = patterns[0]
 
-    # print_pattern(t)
-    # return find_vertical_reflection(t)
-    # print_pattern(patterns[1])
-    # # # !!! THESE REFLECTION ROWS ARE ZERO INDEXED !!!
-    # return find_vertical_reflection(patterns[1])
     acc = 0
-    for i, pattern in enumerate(patterns[1:]):
+    for i, pattern in enumerate(patterns):
         vert = find_vertical_reflection(pattern)
         horz = find_horizontal_reflection(pattern)
         if vert is not None and horz is not None:
             print(f"PATTERN {i} HAS BOTH REFLECTIONS", vert, horz)
             print_pattern(pattern, print)
             return
-
+        print(vert, horz)
         if vert is not None:
             acc += vert + 1
         elif horz is not None:
