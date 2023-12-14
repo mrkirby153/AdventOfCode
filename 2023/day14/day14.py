@@ -1,6 +1,6 @@
 from aoc_common import get_puzzle_input, run, sprint
 from aoc_common.benchmark import print_timings
-from aoc_common.io import as_complex_matrix_dict, to_2d_matrix, print_matrix_dict
+from aoc_common.io import as_complex_matrix_dict, to_2d_matrix
 from tqdm import tqdm
 
 input_data = get_puzzle_input()
@@ -132,6 +132,34 @@ def perform_spin(grid, max_x, max_y):
     return grid
 
 
+def hash_grid(grid):
+    return frozenset((k.real, k.imag) for k in grid.keys())
+
+
+def run_part_2(grid, max_x, max_y, num_cycles):
+    lookup_map = {}
+    hash_to_grid = {}
+
+    for i in tqdm(range(num_cycles)):
+        i += 1
+        sprint("Cycle", i)
+        grid = perform_spin(grid, max_x, max_y)
+        # print_matrix_dict(grid, 0, max_x, 0, max_y)
+        h = hash_grid(grid)
+        if h in lookup_map:
+            start = lookup_map[h]
+            print("Found cycle. Current cycle:", i, "Last cycle:", lookup_map[h])
+            cycle_length = i - lookup_map[h]
+            print("Cycle length:", cycle_length)
+            target = start + (num_cycles - start) % cycle_length
+            target_hash = [k for k, v in lookup_map.items() if v == target][0]
+            return hash_to_grid[target_hash]
+        else:
+            lookup_map[h] = i
+            hash_to_grid[h] = grid
+    return grid
+
+
 def shift(grid, direction, max_x, max_y):
     orig_grid = grid
     grid, moved = direction(grid, max_x, max_y)
@@ -191,12 +219,16 @@ def part_2():
 
     print_matrix_dict(grid, min_x, max_x, min_y, max_y)
 
-    for i in tqdm(range(1000000000)):
-        # sprint("Cycle", i)
-        for func in [move_grid_north, move_grid_west, move_grid_south, move_grid_east]:
-            # sprint(func)
-            grid = shift(grid, func, max_x, max_y)
-            # print_matrix_dict(grid, min_x, max_x, min_y, max_y)
+    # for i in tqdm(range(1000000000)):
+    #     # sprint("Cycle", i)
+    #     for func in [move_grid_north, move_grid_west, move_grid_south, move_grid_east]:
+    #         # sprint(func)
+    #         grid = shift(grid, func, max_x, max_y)
+    #         # print_matrix_dict(grid, min_x, max_x, min_y, max_y)
+
+    grid = run_part_2(grid, max_x, max_y, 1000000000)
+
+    print_matrix_dict(grid, min_x, max_x, min_y, max_y)
 
     load = 0
 
