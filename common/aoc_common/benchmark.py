@@ -1,6 +1,6 @@
 import time
-
 from functools import wraps
+
 
 def print_timings(func: callable) -> callable:
     """

@@ -1,6 +1,5 @@
-from typing import Callable, Iterable, TypeVar, List
 from queue import PriorityQueue
-
+from typing import Callable, Iterable, List, TypeVar
 
 T = TypeVar("T")
 

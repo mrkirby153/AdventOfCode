@@ -1,4 +1,8 @@
 import re
+from typing import Any, Callable, TypeVar
+
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 def to_2d_matrix(raw_input, mapper=None):
@@ -8,7 +12,7 @@ def to_2d_matrix(raw_input, mapper=None):
     return [[y if mapper is None else mapper(y) for y in x] for x in raw_input]
 
 
-def as_complex_matrix_dict(matrix):
+def as_complex_matrix_dict(matrix: list[list[T]]):
     """
     Converts a matrix into a dict of complex numbers to values with 0, 0 being the top left
     """
@@ -19,7 +23,12 @@ def as_complex_matrix_dict(matrix):
     }
 
 
-def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
+def print_2d_matrix(
+    matrix: list[list[T]],
+    print_func=print,
+    mapper: Callable[[complex, T], U] = None,
+    pad=False,
+):
     """
     Prints out a 2d matrix
     """
@@ -43,8 +52,18 @@ def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
         print_func(row_str)
 
 
-def print_matrix_dict(matrix, print_func=print, mapper=None, pad=False, empty="."):
-    def _map(point, val):
+def print_matrix_dict(
+    matrix: dict[complex, T],
+    print_func=print,
+    mapper: Callable[[complex, T], U] = None,
+    pad=False,
+    empty: T = ".",
+):
+    """
+    Prints out a 2d matrix represented as a dict of complex numbers to values
+    """
+
+    def _map(point, val: T):
         return val if mapper is None else mapper(point, val)
 
     max_width = 0
@@ -64,13 +83,28 @@ def print_matrix_dict(matrix, print_func=print, mapper=None, pad=False, empty=".
         print_func(row_str)
 
 
+def get_grid_dimensions(
+    grid: dict[complex, Any]
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    """
+    Gets the min and max x and y values from a grid
+    """
+    min_x, max_x = min([int(x.real) for x in grid.keys()]), max(
+        [int(x.real) for x in grid.keys()]
+    )
+    min_y, max_y = min([int(x.imag) for x in grid.keys()]), max(
+        [int(x.imag) for x in grid.keys()]
+    )
+    return (min_x, max_x), (min_y, max_y)
+
+
 _number_regex = re.compile(r"\d+(?:\.\d+)?")
 _negative_number_regex = re.compile(r"-?\d+(?:\.\d+)?")
 _single_number_regex = re.compile(r"\d")
 _negative_single_number_regex = re.compile(r"-?\d")
 
 
-def numbers(line, single=False, with_negatives=True):
+def numbers(line: str, single=False, with_negatives=True):
     """
     Extracts all numbers from the given line of text. Pass `single` to only extract single digit numbers.
     """

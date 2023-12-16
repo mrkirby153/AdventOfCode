@@ -1,4 +1,9 @@
-def chunk(iterator, size):
+from typing import Any, Generator, Iterable, TypeVar
+
+T = TypeVar("T")
+
+
+def chunk(iterator: Iterable[T], size) -> Generator[list[T]]:
     """
     Chunks an iterator into the given size
     """

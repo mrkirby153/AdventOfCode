@@ -1,6 +1,5 @@
 from setuptools import setup
 
-
 setup(
     name='aoc_common',
     version='0.1.0',
