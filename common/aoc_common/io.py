@@ -43,6 +43,27 @@ def print_2d_matrix(matrix, print_func=print, mapper=None, pad=False):
         print_func(row_str)
 
 
+def print_matrix_dict(matrix, print_func=print, mapper=None, pad=False, empty="."):
+    def _map(point, val):
+        return val if mapper is None else mapper(point, val)
+
+    max_width = 0
+    if pad:
+        raw = [_map(p, v) for p, v in matrix.items()]
+        max_width = max([len(x) for x in raw])
+
+    for y in range(max([int(p.imag) for p in matrix.keys()]) + 1):
+        row_str = ""
+        for x in range(max([int(p.real) for p in matrix.keys()]) + 1):
+            value = str(_map(complex(x, y), matrix.get(complex(x, y), empty)))
+            while pad and len(value) < max_width:
+                value = f" {value}"
+            row_str += value
+            if pad:
+                row_str += " "
+        print_func(row_str)
+
+
 _number_regex = re.compile(r"\d+(?:\.\d+)?")
 _negative_number_regex = re.compile(r"-?\d+(?:\.\d+)?")
 _single_number_regex = re.compile(r"\d")
