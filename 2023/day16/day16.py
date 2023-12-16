@@ -3,6 +3,7 @@ from aoc_common.benchmark import print_timings
 from aoc_common.io import as_complex_matrix_dict, to_2d_matrix, print_matrix_dict
 from collections import defaultdict
 from aoc_common.ansi import colorize, RED
+from tqdm import tqdm
 
 input_data = get_puzzle_input()
 
@@ -74,9 +75,34 @@ def part_1():
     return len(trace_laser(0, grid))
 
 
+def get_outer_ring(grid):
+    max_x = max([int(p.real) for p in grid.keys()])
+    max_y = max([int(p.imag) for p in grid.keys()])
+    # Top row
+    for x in range(0, max_x + 1):
+        yield complex(x, 0), (0 + 1j)
+    # Bottom row
+    for x in range(0, max_x + 1):
+        yield complex(x, max_y), (0 - 1j)
+    # Left column
+    for y in range(1, max_y):
+        yield complex(0, y), 1
+    # Right column
+    for y in range(1, max_y):
+        yield complex(max_x, y), -1
+
+
 @print_timings
 def part_2():
-    pass
+    grid = load_data(input_data)
+
+    max_energized = 0
+    for start, direction in get_outer_ring(grid):
+        visited = trace_laser(start, grid, direction)
+        max_energized = max(max_energized, len(visited))
+        print("max:", max_energized, end="\r")
+    print()
+    return max_energized
 
 
 run(part_1, part_2, __name__)
