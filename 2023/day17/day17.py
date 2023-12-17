@@ -20,32 +20,16 @@ class PrioritizedItem:
     item: any = field(compare=False)
 
 
-DIRECTIONS = {
-    1: 0 + 1j,  # Up
-    2: 0 - 1j,  # Down
-    3: -1 + 0j,  # Left
-    4: 1 + 0j,  # Right
+DIRECTION_SYMBOLS = {
+    +1j: "▼",
+    -1j: "▲",
+    -1: "◀",
+    +1: "▶",
 }
-
-
-def to_direction(ordinal):
-    return DIRECTIONS[ordinal]
-
-
-def from_direction(direction):
-    return DIRECTIONS.index(direction)
 
 
 def load_data(input_data):
     return as_complex_matrix_dict(to_2d_matrix(input_data))
-
-
-def from_complex(c):
-    return int(c.real), int(c.imag)
-
-
-def to_complex(x):
-    return complex(x[0], x[1])
 
 
 def search(graph, start, end, max_steps, min_steps):
@@ -53,17 +37,19 @@ def search(graph, start, end, max_steps, min_steps):
 
     seen = set()
     costs = {}
+    prev = {}
 
     starts = [(start, 1, 0), (start, +1j, 0)]
     for s in starts:
         frontier.put(PrioritizedItem(0, s))
         costs[s] = 0
+        prev[s] = None
     while not frontier.empty():
         current = frontier.get()
         (pos, direction, num_steps) = current.item
 
         if pos == end and num_steps >= min_steps:
-            return current.priority
+            return current.priority, prev, current.item
 
         if current.item in seen:
             continue
@@ -93,8 +79,9 @@ def search(graph, start, end, max_steps, min_steps):
             cost_to_enter = costs[current.item] + int(graph.get(new_point, 1e100))
             if new_item not in costs or cost_to_enter < costs[new_item]:
                 costs[new_item] = cost_to_enter
+                prev[new_item] = current.item
                 frontier.put(PrioritizedItem(cost_to_enter, new_item))
-    return None
+    return None, None, None
 
 
 @print_timings
@@ -105,7 +92,21 @@ def part_1():
     start = 0
     end = complex(max_x, max_y)
 
-    return search(graph, start, end, 3, 1)
+    cost, prev, current = search(graph, start, end, 3, 1)
+
+    path = []
+    while current is not None:
+        path.append(current)
+        current = prev[current]
+
+    symbols = {k: DIRECTION_SYMBOLS[v] for (k, v, s) in path}
+    path = [p[0] for p in path]
+
+    print_matrix_dict(
+        graph, sprint, lambda p, v: colorize(symbols.get(p, v), RED) if p in path else v
+    )
+
+    return cost
 
 
 @print_timings
@@ -116,7 +117,18 @@ def part_2():
     start = 0
     end = complex(max_x, max_y)
 
-    return search(graph, start, end, 10, 4)
+    cost, prev, current = search(graph, start, end, 10, 4)
+
+    path = []
+    while current is not None:
+        path.append(current)
+        current = prev[current]
+
+    path = [p[0] for p in path]
+
+    print_matrix_dict(graph, sprint, lambda p, v: colorize(v, RED) if p in path else v)
+
+    return cost
 
 
 run(part_1, part_2, __name__)
