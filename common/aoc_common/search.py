@@ -106,4 +106,4 @@ def search(
                 priority = next_cost + herustic(next_state) if herustic else next_cost
                 prev[next_state] = current
                 frontier.put(PrioritizedItem(priority, next_state))
-    return None, None, None
+    return None, None, costs
