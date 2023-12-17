@@ -48,13 +48,13 @@ def to_complex(x):
     return complex(x[0], x[1])
 
 
-def search(graph, start, end, max_steps):
+def search(graph, start, end, max_steps, min_steps):
     frontier = PriorityQueue()
 
     seen = set()
     costs = {}
 
-    starts = [(start, 1, 1), (start, +1j, 1)]
+    starts = [(start, 1, 0), (start, +1j, 0)]
     for s in starts:
         frontier.put(PrioritizedItem(0, s))
         costs[s] = 0
@@ -62,17 +62,23 @@ def search(graph, start, end, max_steps):
         current = frontier.get()
         (pos, direction, num_steps) = current.item
 
-        if pos == end:
+        if pos == end and num_steps >= min_steps:
             return current.priority
 
         if current.item in seen:
             continue
         seen.add(current.item)
 
-        new_directions = [direction * 1j, direction * -1j]  # Turn left or right
-
-        if num_steps < max_steps:
-            new_directions.append(direction)  # Go straight if we can
+        # If we have taken less than min_steps, we can only go straight
+        if num_steps < min_steps:
+            new_directions = [direction]
+        else:
+            # If we have taken at least min_steps, we can turn
+            # However, if we have taken more than max_steps, we can only turn
+            if num_steps == max_steps:
+                new_directions = [direction * 1j, direction * -1j]
+            else:
+                new_directions = [direction * 1j, direction * -1j, direction]
 
         for new_direction in new_directions:
             new_point = pos + new_direction
@@ -99,14 +105,20 @@ def part_1():
     start = 0
     end = complex(max_x, max_y)
 
-    return search(graph, start, end, 3)
+    return search(graph, start, end, 3, 1)
 
 
 @print_timings
 def part_2():
-    pass
+    graph = load_data(input_data)
+
+    (min_x, max_x), (min_y, max_y) = get_grid_dimensions(graph)
+    start = 0
+    end = complex(max_x, max_y)
+
+    return search(graph, start, end, 10, 4)
 
 
 run(part_1, part_2, __name__)
 
-# 673 -- Too low
+# 827 -- too low
