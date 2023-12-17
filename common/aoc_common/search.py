@@ -1,50 +1,25 @@
 from queue import PriorityQueue
-from typing import Callable, Iterable, List, TypeVar
+from typing import Callable, Iterable, List, TypeVar, Generic
+
+from dataclasses import dataclass, field
 
 T = TypeVar("T")
 
 
-def _trace(parents, start, end):
-    path = [end]
-    while path[-1] != start:
-        path.append(parents[path[-1]])
-    path.reverse()
-    return path
+@dataclass(order=True)
+class PrioritizedItem(Generic[T]):
+    priority: int
+    item: T = field(compare=False)
 
 
-def bfs(
-    start_state: T,
-    end_condition: Callable[[T], bool],
-    next_states: Callable[[T], Iterable[T]],
-    trace=False,
-):
-    """
-    Generic BFS.
+def _trace(parents, start):
+    path = []
+    current = start
 
-    :param start_state: The starting state
-    :param end_condition: A function that returns True if the state is the end state
-    :param next_states: A function that returns the next states from the current state
-    """
-    queue = [start_state]
-    seen = set()
-    parents = {}
-
-    while queue:
-        state = queue.pop(0)
-        if end_condition(state):
-            return state if not trace else _trace(parents, start_state, state)
-
-        if state in seen:
-            continue
-
-        seen.add(state)
-        if not trace:
-            queue.extend(next_states(state))
-        else:
-            for next_state in next_states(state):
-                if next_state not in queue:
-                    queue.append(next_state)
-                    parents[next_state] = state
+    while current is not None:
+        path.append(current)
+        current = parents[current]
+    return list(reversed(path))
 
 
 def dijkstra(
@@ -80,57 +55,55 @@ def dijkstra(
         current = frontier.get()
         for neighbor in neighbors(current):
             new_cost = costs[current] + cost(current, neighbor)
-            if current not in costs or new_cost < costs[neighbor]:
+            if neighbor not in costs or new_cost < costs[neighbor]:
                 costs[neighbor] = new_cost
                 frontier.put(neighbor, new_cost)
                 came_from[neighbor] = current
     return came_from, costs
 
 
-def a_star(
-    starts: List[T],
-    goal: T,
-    neighbors: Callable[[T], Iterable[T]],
+def search(
+    start_states: Iterable[T],
+    end_condition: Callable[[T], bool],
+    next_states: Callable[[T], Iterable[T]],
     cost: Callable[[T, T], int] = None,
-    herustic: Callable[[T, T], int] = None,
+    herustic: Callable[[T], int] = None,
 ):
     """
-    Generic A* algorithm.
+    A generic search algorithm that uses A* if `herustic` is not None, otherwise uses Dijkstra's algorithm.
 
-    :param starts: The starting states
-    :param goal: The goal state
-    :param neighbors: A function that returns the neighbors of a state
+    If cost is 1, this is equivalent to BFS.
+
+    :param start_states: The starting states
+    :param end_condition: A function that returns True if the state is the end state
+    :param next_states: A function that returns the next states from the current state
     :param cost: A function that returns the cost of moving from one state to another
-    :param herustic: A function that returns the herustic cost of moving from one state to another
+    :param herustic: A function that returns the herustic cost of moving from one state towards the goal state
 
-    :return: A tuple of (came_from, costs) where came_from is a dict of state -> previous state and costs is a dict of state -> cost
+    :return: A three tuple of (end_state, path, costs) where end_state is the end state, path is a list of states from the start state to the end state, and costs is a dict of state -> cost
     """
-    if not isinstance(starts, list):
-        starts = [starts]
 
-    if cost is None:
-        cost = lambda current, next: 1
-    if herustic is None:
-        herustic = lambda a, b: sum(abs(x - y) for x, y in zip(a, b))
+    frontier = PriorityQueue[PrioritizedItem[T]]()
 
-    frontier = PriorityQueue()
-
-    came_from = {}
     costs = {}
-    for start in starts:
-        frontier.put(start, 0)
-        came_from[start] = None
+    prev = {}
+
+    for start in start_states:
+        frontier.put(PrioritizedItem(0, start))
         costs[start] = 0
+        prev[start] = None
 
     while not frontier.empty():
-        current = frontier.get()
-        if current == goal:
-            break
-        for neighbor in neighbors(current):
-            new_cost = costs[current] + cost(current, neighbor)
-            if current not in costs or new_cost < costs[neighbor]:
-                costs[neighbor] = new_cost
-                priority = new_cost + herustic(neighbor, goal)
-                frontier.put(neighbor, priority)
-                came_from[neighbor] = current
-    return came_from, costs
+        current = frontier.get().item
+
+        if end_condition(current):
+            return current, _trace(prev, current), costs
+
+        for next_state in next_states(current):
+            next_cost = costs[current] + cost(current, next_state)
+            if next_state not in costs or next_cost < costs[next_state]:
+                costs[next_state] = next_cost
+                priority = next_cost + herustic(next_state) if herustic else next_cost
+                prev[next_state] = current
+                frontier.put(PrioritizedItem(priority, next_state))
+    return None, None, None

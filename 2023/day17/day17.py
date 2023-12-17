@@ -6,10 +6,9 @@ from aoc_common.io import (
     get_grid_dimensions,
     print_matrix_dict,
 )
-from aoc_common.plane import manhattan
+from aoc_common.search import search as aoc_search
 from aoc_common.ansi import colorize, RED
 from dataclasses import dataclass, field
-from queue import PriorityQueue
 
 input_data = get_puzzle_input()
 
@@ -33,36 +32,19 @@ def load_data(input_data):
 
 
 def search(graph, start, end, max_steps, min_steps):
-    frontier = PriorityQueue()
+    start_states = [(start, 1, 0), (start, +1j, 0)]
 
-    seen = set()
-    costs = {}
-    prev = {}
+    def _end(state):
+        return state[0] == end and state[2] >= min_steps
 
-    starts = [(start, 1, 0), (start, +1j, 0)]
-    for s in starts:
-        frontier.put(PrioritizedItem(0, s))
-        costs[s] = 0
-        prev[s] = None
-    while not frontier.empty():
-        current = frontier.get()
-        (pos, direction, num_steps) = current.item
+    def _next_states(current):
+        (pos, direction, num_steps) = current
 
-        if pos == end and num_steps >= min_steps:
-            return current.priority, prev, current.item
-
-        if current.item in seen:
-            continue
-        seen.add(current.item)
-
-        # If we have taken less than min_steps, we can only go straight
         if num_steps < min_steps:
-            new_directions = [direction]
+            new_directions = [direction]  # Must go straight
         else:
-            # If we have taken at least min_steps, we can turn
-            # However, if we have taken more than max_steps, we can only turn
             if num_steps == max_steps:
-                new_directions = [direction * 1j, direction * -1j]
+                new_directions = [direction * 1j, direction * -1j]  # Must turn
             else:
                 new_directions = [direction * 1j, direction * -1j, direction]
 
@@ -71,17 +53,17 @@ def search(graph, start, end, max_steps, min_steps):
             if new_point == current:
                 continue  # Cannot go back to where we came
 
-            new_item = (
+            yield (
                 new_point,
                 new_direction,
                 num_steps + 1 if new_direction == direction else 1,
             )
-            cost_to_enter = costs[current.item] + int(graph.get(new_point, 1e100))
-            if new_item not in costs or cost_to_enter < costs[new_item]:
-                costs[new_item] = cost_to_enter
-                prev[new_item] = current.item
-                frontier.put(PrioritizedItem(cost_to_enter, new_item))
-    return None, None, None
+
+    def _cost(_current_state, next_state):
+        (pos, direction, num_steps) = next_state
+        return int(graph.get(pos, 1e100))
+
+    return aoc_search(start_states, _end, _next_states, _cost)
 
 
 @print_timings
@@ -92,12 +74,8 @@ def part_1():
     start = 0
     end = complex(max_x, max_y)
 
-    cost, prev, current = search(graph, start, end, 3, 1)
-
-    path = []
-    while current is not None:
-        path.append(current)
-        current = prev[current]
+    end, path, cost = search(graph, start, end, 3, 1)
+    cost = cost[end]
 
     symbols = {k: DIRECTION_SYMBOLS[v] for (k, v, s) in path}
     path = [p[0] for p in path]
@@ -117,12 +95,8 @@ def part_2():
     start = 0
     end = complex(max_x, max_y)
 
-    cost, prev, current = search(graph, start, end, 10, 4)
-
-    path = []
-    while current is not None:
-        path.append(current)
-        current = prev[current]
+    end, path, cost = search(graph, start, end, 10, 4)
+    cost = cost[end]
 
     path = [p[0] for p in path]
 
