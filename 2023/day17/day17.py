@@ -48,66 +48,47 @@ def to_complex(x):
     return complex(x[0], x[1])
 
 
-def a_star(graph, start, end, max_steps):
+def search(graph, start, end, max_steps):
     frontier = PriorityQueue()
 
-    starts = [PrioritizedItem(0, (start, 1, 0)), PrioritizedItem(0, (start, -1j, 0))]
-
-    came_from = {}
+    seen = set()
     costs = {}
 
+    starts = [(start, 1, 1), (start, +1j, 1)]
     for s in starts:
-        frontier.put(s)
-        came_from[s.item[0]] = None
-        costs[s.item[0]] = 0
-
+        frontier.put(PrioritizedItem(0, s))
+        costs[s] = 0
     while not frontier.empty():
-        sprint("---")
         current = frontier.get()
+        (pos, direction, num_steps) = current.item
 
-        (point, direction, num_steps) = current.item
-        sprint("Current", point, direction, num_steps)
+        if pos == end:
+            return current.priority
 
-        assert num_steps <= max_steps, f"Too many steps, {num_steps}"
+        if current.item in seen:
+            continue
+        seen.add(current.item)
 
-        if point == end:
-            break
+        new_directions = [direction * 1j, direction * -1j]  # Turn left or right
 
-        candidate_directions = []
-        candidate_directions.extend(
-            [direction * 1j, direction * -1j]
-        )  # Turn left or right
         if num_steps < max_steps:
-            candidate_directions.append(direction)  # Go straight
-        else:
-            sprint("Must turn")
+            new_directions.append(direction)  # Go straight if we can
 
-        sprint("Candidate directions", candidate_directions)
-        for new_direction in candidate_directions:
-            new_point = point + new_direction
+        for new_direction in new_directions:
+            new_point = pos + new_direction
+            if new_point == current:
+                continue  # Cannot go back to where we came
 
-            if new_point not in graph:
-                continue  # This point is out of bounds
-            if graph[new_point] == ".":  # This is a wall
-                continue
-
-            new_cost = costs[point] + int(graph[new_point])
-            if new_point not in costs or new_cost < costs[new_point]:
-                sprint("Adding to frontier", new_point, "with cost", new_cost)
-                costs[new_point] = new_cost
-                priority = new_cost + manhattan(new_point, end)
-                frontier.put(
-                    PrioritizedItem(
-                        priority,
-                        (
-                            new_point,
-                            new_direction,
-                            num_steps + 1 if new_direction == direction else 0,
-                        ),
-                    )
-                )
-                came_from[new_point] = point
-    return came_from, costs
+            new_item = (
+                new_point,
+                new_direction,
+                num_steps + 1 if new_direction == direction else 1,
+            )
+            cost_to_enter = costs[current.item] + int(graph.get(new_point, 1e100))
+            if new_item not in costs or cost_to_enter < costs[new_item]:
+                costs[new_item] = cost_to_enter
+                frontier.put(PrioritizedItem(cost_to_enter, new_item))
+    return None
 
 
 @print_timings
@@ -118,20 +99,7 @@ def part_1():
     start = 0
     end = complex(max_x, max_y)
 
-    came_from, cost = a_star(graph, start, end, 3)
-    marked_points = []
-
-    current = end
-    while current != start:
-        marked_points.append(current)
-        current = came_from[current]
-
-    print_matrix_dict(
-        graph,
-        sprint,
-        lambda p, v: colorize(str(v), RED) if p in marked_points else v,
-    )
-    return cost[end]
+    return search(graph, start, end, 3)
 
 
 @print_timings
