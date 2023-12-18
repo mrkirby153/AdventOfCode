@@ -28,78 +28,66 @@ def load_input(data):
     return instructions
 
 
+def load_input_2(data):
+    instructions = []
+    for line in data:
+        code = line.split()[-1][2:-1]
+        sprint("Code", code)
+        distance = int(code[:-1], 16)
+        direction = code[-1]
+        if direction == "0":
+            direction = "R"
+        elif direction == "1":
+            direction = "D"
+        elif direction == "2":
+            direction = "L"
+        elif direction == "3":
+            direction = "U"
+        else:
+            assert False, f"Unknown direction {direction}"
+        instructions.append(
+            Instruction(direction, distance, "black")
+        )  # We don't care about color, actually lol
+    return instructions
+
+
 def plot(instructions):
     current = complex(0, 0)
-    grid = {}
-    vertexes = set()
+    vertexes = []
+    line_length = 0
     for instruction in tqdm(instructions):
         sprint(f"Instruction: {instruction}")
-        vertexes.add(current)
-        for _ in range(instruction.distance):
-            current += DIRECTIONS[instruction.direction]
-            grid[current] = instruction.color
-    return grid, vertexes
+        vertexes.append(current)
+        current += DIRECTIONS[instruction.direction] * instruction.distance
+        line_length += instruction.distance
+    return vertexes, (line_length // 2 + 1)
 
 
-def find_first_inside_point(grid):
-    (min_x, max_x), (min_y, max_y) = get_grid_dimensions(grid)
-    for y in range(max_y + 1):
-        walls = 0
-        for x in range(max_x + 1):
-            if grid.get(complex(x, y)) is not None:
-                walls += 1
-            else:
-                print(f"Checking {x}, {y}", walls)
-                if walls % 2 == 1:
-                    return complex(x, y)
-    return None
-
-
-def flood_fill(grid, start):
-    visited = set()
-
-    queue = [start]
-    while queue:
-        point = queue.pop(0)
-        if point in visited:
-            continue
-        visited.add(point)
-
-        for p in neighbors(point):
-            if grid.get(p) is None:
-                queue.append(p)
-    return visited
+# From https://stackoverflow.com/a/24468019
+def poly_area(poly):
+    area = 0.0
+    for i in range(len(poly)):
+        j = (i + 1) % len(poly)
+        area += poly[i].real * poly[j].imag
+        area -= poly[j].real * poly[i].imag
+    area = abs(area) / 2.0
+    return area
 
 
 @print_timings
 def part_1():
     instructions = load_input(input_data)
-    plotted, vertexes = plot(instructions)
+    plotted, border_length = plot(instructions)
 
-    inside = find_first_inside_point(plotted)
-    sprint(f"Inside: {inside}")
-
-    inside = flood_fill(plotted, inside)
-
-    def _mapper(pos, val):
-        if pos in vertexes:
-            return "#"
-        if pos in inside:
-            return "#"
-        return "#" if pos in plotted else "."
-
-    print_matrix_dict(
-        plotted,
-        sprint,
-        mapper=_mapper,
-    )
-
-    return len(inside) + len(plotted)
+    return poly_area(plotted) + border_length
 
 
 @print_timings
 def part_2():
-    pass
+    instructions = load_input_2(input_data)
+    plotted, border_length = plot(instructions)
+
+    return poly_area(plotted) + border_length
 
 
 run(part_1, part_2, __name__)

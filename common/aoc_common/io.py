@@ -69,7 +69,7 @@ def print_matrix_dict(
     max_width = 0
     if pad:
         raw = [_map(p, v) for p, v in matrix.items()]
-        max_width = max([len(x) for x in raw])
+        max_width = max([len(str(x)) for x in raw])
 
     for y in range(max([int(p.imag) for p in matrix.keys()]) + 1):
         row_str = ""
