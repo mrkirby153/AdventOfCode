@@ -1,9 +1,12 @@
 from aoc_common import get_puzzle_input, run, sprint
 from aoc_common.benchmark import print_timings
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+from copy import deepcopy
 from aoc_common.io import numbers
 import re
 from tqdm import tqdm
+from functools import reduce
+from operator import mul
 
 input_data = get_puzzle_input()
 
@@ -68,6 +71,47 @@ def get_rating(part):
     return part.x + part.m + part.a + part.s
 
 
+all_valid = []
+
+
+def traverse_tree(workflows, current_node, ranges):
+    if current_node == "A":
+        sprint(f"Found accepted range: {ranges}")
+        all_valid.append(ranges)
+        return
+    if current_node == "R":
+        return
+
+    for rule in workflows[current_node].steps:
+        if rule.rule == "True":
+            traverse_tree(workflows, rule.destination, deepcopy(ranges))
+        else:
+            variable = rule.rule[0]
+            condition = rule.rule[1]
+            constraint = int(rule.rule[2:])
+            destination = rule.destination
+
+            current = ranges[variable]
+
+            lower = set(range(1, constraint + 1))
+            higher = set(range(constraint, 4001))
+
+            if condition == "<":
+                new_field = current - higher  # Remove all higher values
+            elif condition == ">":
+                new_field = current - lower  # Remove all lower values
+
+            ranges[variable] = (
+                current - new_field
+            )  # Anything not in new_field is invalid and should be passed on
+
+            new_part = deepcopy(ranges)
+            new_part[variable] = new_field
+            ranges = deepcopy(ranges)
+
+            traverse_tree(workflows, destination, new_part)
+
+
 @print_timings
 def part_1():
     parts, workflows = load_input(input_data)
@@ -87,7 +131,20 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    _parts, workflows = load_input(input_data)
+
+    ranges = {
+        "x": set(range(1, 4001)),
+        "m": set(range(1, 4001)),
+        "a": set(range(1, 4001)),
+        "s": set(range(1, 4001)),
+    }
+    traverse_tree(workflows, "in", ranges)
+
+    r = 0
+    for k in all_valid:
+        r += reduce(mul, (len(v) for v in k.values()), 1)
+    return r
 
 
 run(part_1, part_2, __name__)
