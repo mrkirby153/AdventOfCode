@@ -116,3 +116,18 @@ def numbers(line: str, single=False, with_negatives=True):
     regex = single_re if single else number_re
     groups = regex.findall(line)
     return [int(number) if "." not in number else float(number) for number in groups]
+
+
+def collapse_range(r):
+    """
+    Collapses a list of numbers into ranges
+    """
+    ranges = []
+
+    for n in sorted(r):
+        if not ranges or n > ranges[-1][-1] + 1:
+            ranges.append([])
+        ranges[-1][1:] = (n,)
+    if len(ranges) == 1:
+        return ranges[0]
+    return ranges
