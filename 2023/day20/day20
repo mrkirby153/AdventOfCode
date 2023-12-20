@@ -1,0 +1,169 @@
+digraph day20 {
+	fg [label="%fg"]
+	fg -> nt
+	fg -> gt
+	zp [label="&zp"]
+	zp -> rx
+	fh [label="%fh"]
+	fh -> nt
+	fh -> xz
+	pj [label="%pj"]
+	pj -> zj
+	pj -> zq
+	jc [label="%jc"]
+	jc -> nt
+	jc -> nk
+	mr [label="%mr"]
+	mr -> vv
+	mr -> pz
+	cl [label="%cl"]
+	cl -> fp
+	cl -> zq
+	xb [label="%xb"]
+	xb -> bl
+	xb -> vv
+	nc [label="%nc"]
+	nc -> zq
+	mg [label="%mg"]
+	mg -> vn
+	zj [label="%zj"]
+	zj -> cf
+	sb [label="&sb"]
+	sb -> zp
+	ht [label="%ht"]
+	ht -> pp
+	gt [label="%gt"]
+	gt -> jc
+	rq [label="%rq"]
+	rq -> ft
+	nt [label="&nt"]
+	nt -> rq
+	nt -> fg
+	nt -> ft
+	nt -> nd
+	nt -> gt
+	nt -> xz
+	ps [label="%ps"]
+	ps -> xm
+	fs [label="%fs"]
+	fs -> ff
+	nb [label="%nb"]
+	nb -> dv
+	qd [label="%qd"]
+	qd -> xb
+	kg [label="%kg"]
+	kg -> mr
+	kg -> vv
+	dv [label="%dv"]
+	dv -> vv
+	dv -> hr
+	rm [label="%rm"]
+	rm -> zq
+	rm -> fs
+	nk [label="%nk"]
+	nk -> rq
+	nk -> nt
+	hr [label="%hr"]
+	hr -> dm
+	hr -> vv
+	xm [label="%xm"]
+	xm -> vn
+	xm -> ht
+	pp [label="%pp"]
+	pp -> mq
+	br [label="%br"]
+	br -> vn
+	br -> jz
+	gr [label="%gr"]
+	gr -> ln
+	bh [label="%bh"]
+	bh -> qd
+	bh -> vv
+	cf [label="%cf"]
+	cf -> gr
+	cf -> zq
+	vv [label="&vv"]
+	vv -> dm
+	vv -> bl
+	vv -> sb
+	vv -> nb
+	vv -> qd
+	vv -> bh
+	zc [label="%zc"]
+	zc -> zv
+	zv [label="%zv"]
+	zv -> dc
+	zv -> vn
+	jz [label="%jz"]
+	jz -> qs
+	nd [label="&nd"]
+	nd -> zp
+	rd [label="%rd"]
+	rd -> nc
+	rd -> zq
+	ds [label="&ds"]
+	ds -> zp
+	mq [label="%mq"]
+	mq -> vn
+	mq -> zc
+	bl [label="%bl"]
+	bl -> bb
+	qn [label="%qn"]
+	qn -> nt
+	pz [label="%pz"]
+	pz -> vv
+	qs [label="%qs"]
+	qs -> vn
+	qs -> ps
+	lm [label="%lm"]
+	lm -> nt
+	lm -> qn
+	xz [label="%xz"]
+	xz -> dr
+	bb [label="%bb"]
+	bb -> nb
+	bb -> vv
+	dm [label="%dm"]
+	dm -> kg
+	ft [label="%ft"]
+	ft -> fh
+	vn [label="&vn"]
+	vn -> br
+	vn -> jz
+	vn -> ht
+	vn -> ps
+	vn -> zc
+	vn -> pp
+	vn -> ds
+	xd [label="%xd"]
+	xd -> nt
+	xd -> lm
+	hf [label="&hf"]
+	hf -> zp
+	broadcaster [label=broadcaster]
+	broadcaster -> pj
+	broadcaster -> fg
+	broadcaster -> bh
+	broadcaster -> br
+	fp [label="%fp"]
+	fp -> rd
+	fp -> zq
+	zq [label="&zq"]
+	zq -> fs
+	zq -> gr
+	zq -> ff
+	zq -> hf
+	zq -> ln
+	zq -> zj
+	zq -> pj
+	ff [label="%ff"]
+	ff -> cl
+	dr [label="%dr"]
+	dr -> xd
+	dr -> nt
+	ln [label="%ln"]
+	ln -> rm
+	dc [label="%dc"]
+	dc -> mg
+	dc -> vn
+}

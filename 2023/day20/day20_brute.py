@@ -4,8 +4,6 @@ from enum import Enum
 from collections import namedtuple, defaultdict
 from copy import deepcopy
 from tqdm import tqdm
-from math import lcm
-import graphviz
 
 
 input_data = get_puzzle_input()
@@ -66,12 +64,9 @@ def propogate_button_push(modules):
     high_pulses = 0
 
     queue = [("button", "broadcaster", PulseType.LOW)]
-    pulsed = set()
 
     def _send_pulses(source_module, pulse_type, destination_modules):
-        nonlocal queue, low_pulses, high_pulses, pulsed
-        if pulse_type == PulseType.HIGH:
-            pulsed.add(source_module)
+        nonlocal queue, low_pulses, high_pulses
         for destination in destination_modules:
             if pulse_type == PulseType.LOW:
                 low_pulses += 1
@@ -79,11 +74,17 @@ def propogate_button_push(modules):
                 high_pulses += 1
             queue.append((source_module, destination, pulse_type))
 
+    pulsed_rx = False
+
     while queue:
         # sprint("Queue:", queue)
         source_module_name, dest_module_name, pulse_type = queue.pop(0)
         sprint(source_module_name, "-", pulse_type, "->", dest_module_name)
         dest_module = modules.get(dest_module_name)
+
+        if dest_module_name == "rx" and pulse_type == PulseType.LOW:
+            pulsed_rx = True
+
         if not dest_module:
             continue
 
@@ -124,59 +125,39 @@ def propogate_button_push(modules):
                 _send_pulses(dest_module_name, PulseType.HIGH, dest_module.outputs)
         else:
             raise ValueError(f"Unknown module type: {dest_module.type}")
-    return low_pulses, high_pulses, modules, pulsed
+    return low_pulses, high_pulses, modules, pulsed_rx
 
 
-care_about = ["hf", "nd", "sb", "ds"]
-
-
-def push_button_many_times(modules, times, observe_high):
+def push_button_many_times(modules, times):
     modules = deepcopy(modules)
     low_pulses = 0
     high_pulses = 0
-    observed = {}
-    for i in tqdm(range(times)):
-        low, high, modules, pulsed = propogate_button_push(modules)
-        for c in observe_high:
-            if c in pulsed:
-                observed.setdefault(c, []).append(i)
+    for _ in tqdm(range(times)):
+        low, high, modules, _ignored = propogate_button_push(modules)
         low_pulses += low
         high_pulses += high
-    return low_pulses, high_pulses, observed
+    return low_pulses, high_pulses
 
 
-def render_graph(modules):
-    diagram = graphviz.Digraph("day20")
-    node_type = {
-        ModuleType.BROADCAST: "",
-        ModuleType.FLIP_FLOP: "%",
-        ModuleType.CONJUNCTION: "&",
-    }
-    for node, module in modules.items():
-        diagram.node(node, node_type[module.type] + node)
-        for output in module.outputs:
-            diagram.edge(node, output)
-
-    print(diagram.render("day20"))
+def determine_min_presses(modules):
+    modules = deepcopy(modules)
+    for i in tqdm(range(1, 1000000000000)):
+        low, high, modules, pulsed_rx = propogate_button_push(modules)
+        if pulsed_rx:
+            return i
 
 
 @print_timings
 def part_1():
     modules = load_input(input_data)
-    low, high, _ = push_button_many_times(modules, 1000)
+    low, high = push_button_many_times(modules, 1000)
     return low * high
 
 
 @print_timings
 def part_2():
     modules = load_input(input_data)
-    low, high, observed = push_button_many_times(
-        modules, 10000, ["hf", "nd", "sb", "ds"]
-    )
-    parts = []
-    for v in observed.values():
-        parts.append(v[1] - v[0])
-    return lcm(*parts)
+    return determine_min_presses(modules)
 
 
 run(part_1, part_2, __name__)
