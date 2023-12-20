@@ -163,7 +163,7 @@ def render_graph(modules):
 @print_timings
 def part_1():
     modules = load_input(input_data)
-    low, high, _ = push_button_many_times(modules, 1000)
+    low, high, _ = push_button_many_times(modules, 1000, [])
     return low * high
 
 
