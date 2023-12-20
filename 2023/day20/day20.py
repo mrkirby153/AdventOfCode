@@ -170,9 +170,8 @@ def part_1():
 @print_timings
 def part_2():
     modules = load_input(input_data)
-    low, high, observed = push_button_many_times(
-        modules, 10000, ["hf", "nd", "sb", "ds"]
-    )
+    conjunctions = [n for n, m in modules.items() if m.type == ModuleType.CONJUNCTION]
+    low, high, observed = push_button_many_times(modules, 10000, conjunctions)
     parts = []
     for v in observed.values():
         parts.append(v[1] - v[0])
