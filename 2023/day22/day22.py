@@ -89,13 +89,19 @@ def find_max_z(data):
     return max([brick.b.z for brick in data] + [brick.a.z for brick in data])
 
 
-def fall_bricks(bricks):
+def fall_bricks(bricks, progress=True):
     bricks = bricks.copy()
     # Move all of the bricks down as far as they can go without intersecting with another brick
     max_z = find_max_z(bricks)
     settled_bricks = []
+    moved_bricks = []
     sprint(f"Max Z: {max_z}")
-    for z in tqdm(range(1, max_z + 1), desc="falling bricks"):
+    itr = (
+        tqdm(range(1, max_z + 1), desc="falling bricks")
+        if progress
+        else range(1, max_z + 1)
+    )
+    for z in itr:
         candidates = []
         for brick in bricks:
             if brick.a.z == z or brick.b.z == z:
@@ -121,13 +127,9 @@ def fall_bricks(bricks):
                     )
                     break
             settled_bricks.append(new_brick)
-    return settled_bricks
-
-
-def can_tower_fall(bricks):
-    initial = sorted(bricks)
-    final = sorted(fall_bricks(bricks))
-    return initial != final
+            if new_brick != brick:
+                moved_bricks.append(new_brick)
+    return settled_bricks, moved_bricks
 
 
 def determine_bricks_to_remove(settled_bricks):
@@ -136,21 +138,36 @@ def determine_bricks_to_remove(settled_bricks):
     for brick in tqdm(settled_bricks, desc="determining bricks to remove"):
         new_bricks = settled_bricks.copy()
         new_bricks.remove(brick)
-        if not can_tower_fall(new_bricks):
+        _, moved_bricks = fall_bricks(new_bricks, False)
+        if len(moved_bricks) == 0:
             bricks_to_remove.append(brick)
     return bricks_to_remove
+
+
+def determine_chain(bricks):
+    total = 0
+    for brick in tqdm(bricks, desc="determining chain"):
+        new_bricks = bricks.copy()
+        new_bricks.remove(brick)
+        _, moved_bricks = fall_bricks(new_bricks, False)
+        total += len(moved_bricks)
+    return total
 
 
 @print_timings
 def part_1():
     data = load_input(input_data)
-    new_bricks = fall_bricks(data)
+    new_bricks, moved_bricks = fall_bricks(data)
     return len(determine_bricks_to_remove(new_bricks))
 
 
 @print_timings
 def part_2():
     pass
+    data = load_input(input_data)
+    new_bricks = fall_bricks(data)[0]
+
+    return determine_chain(new_bricks)
 
 
 run(part_1, part_2, __name__)
