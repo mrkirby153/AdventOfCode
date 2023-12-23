@@ -1,9 +1,16 @@
 from aoc_common import get_puzzle_input, run, sprint, parsed_args
 from aoc_common.benchmark import print_timings
-from aoc_common.io import to_2d_matrix, as_complex_matrix_dict, print_2d_matrix, numbers
+from aoc_common.io import (
+    to_2d_matrix,
+    as_complex_matrix_dict,
+    print_2d_matrix,
+    numbers,
+    get_grid_dimensions,
+)
 from aoc_common.plane import neighbors
 from aoc_common.ansi import colorize, RED, GREEN
 from collections import defaultdict
+from aoc_common.plane import perimeter, poly_area
 
 input_data = get_puzzle_input()
 
@@ -167,199 +174,8 @@ def part_1():
     return determine_furthest_point(loop_points)
 
 
-def get_shape_of_start(data, start):
-    # |
-    if (
-        start + 1j in data
-        and data[start + 1j] in "|LJ"
-        and start - 1j in data
-        and data[start - 1j] in "|7F"
-    ):
-        return "|"
-
-    # -
-    if (
-        start - 1 in data
-        and data[start - 1] in "-FL"
-        and start + 1 in data
-        and data[start + 1] in "-J7"
-    ):
-        return "-"
-
-    # L
-    if (
-        start - 1j in data
-        and data[start - 1j] in "|F7"
-        and start + 1 in data
-        and data[start + 1] in "-7J"
-    ):
-        return "L"
-    # J
-    if (
-        start - 1j in data
-        and data[start - 1j] in "|F7"
-        and start - 1 in data
-        and data[start - 1] in "-LF"
-    ):
-        return "J"
-    # 7
-    if (
-        start + 1j in data
-        and data[start + 1j] in "|LJ"
-        and start - 1 in data
-        and data[start - 1] in "-FL"
-    ):
-        return "7"
-    # F
-    if (
-        start + 1j in data
-        and data[start + 1j] in "|LJ"
-        and start + 1 in data
-        and data[start + 1] in "-J7"
-    ):
-        return "F"
-
-    assert False, f"Could not determine shape of start {start}"
-
-
-def count_inside_on_expanded(data):
-    # Fill missing points with "."
-    min_x, min_y = (
-        int(min(data, key=lambda x: x.real).real),
-        int(min(data, key=lambda x: x.imag).imag),
-    )
-    max_x, max_y = (
-        int(max(data, key=lambda x: x.real).real),
-        int(max(data, key=lambda x: x.imag).imag),
-    )
-    for y in range(min_y, max_y + 1):
-        for x in range(min_x, max_x + 1):
-            point = complex(x, y)
-            if point not in data:
-                data[point] = "."
-
-    count = 0
-    for point, value in data.items():
-        if point.real % 2 == 0 and point.imag % 2 == 0:
-            sprint("Value", value)
-            if value == ".":
-                count += 1
-    return count
-
-
-def double_resolution(data):
-    new_data = {}
-    for k, v in data.items():
-        new_data[k * 2 + 2j] = v
-
-    max_x, max_y = (
-        int(max(new_data, key=lambda x: x.real).real),
-        int(max(new_data, key=lambda x: x.imag).imag),
-    )
-
-    # Go horizontal and connect all corners together
-    new_horizontal_points = []
-    for y in range(max_y + 1):
-        start = None
-        for x in range(max_x + 1):
-            point = complex(x, y)
-            curr = new_data.get(point, ".")
-            if curr in ["F", "7", "L", "J"]:
-                if start is None:
-                    start = point
-                else:
-                    start = None
-            else:
-                if start is not None:
-                    new_horizontal_points.append(complex(x, y))
-    for point in new_horizontal_points:
-        new_data[point] = "-"
-
-    # Then go vertical and connect all corners together
-    new_vertical_points = []
-    for x in range(max_x + 1):
-        start = None
-        for y in range(max_y + 1):
-            point = complex(x, y)
-            curr = new_data.get(point, ".")
-            if curr in ["F", "7", "L", "J"]:
-                if start is None:
-                    start = point
-                else:
-                    start = None
-            else:
-                if start is not None:
-                    new_vertical_points.append(complex(x, y))
-    for point in new_vertical_points:
-        new_data[point] = "|"
-    return new_data
-
-
-def get_inside_count(data, points):
-    # Discard all points outside the loop
-    new_data = {}
-    for point, value in data.items():
-        if point in points:
-            new_data[point] = value
-    doubled = double_resolution(new_data)
-    max_x, max_y = (
-        int(max(doubled, key=lambda x: x.real).real),
-        int(max(doubled, key=lambda x: x.imag).imag),
-    )
-
-    # Flood fill from the outside corners
-    start_points = [
-        complex(-1, -1),
-        complex(-1, max_y + 1),
-        complex(max_x + 1, -1),
-        complex(max_x + 1, max_y + 1),
-    ]
-
-    outside_points = []
-
-    queue = start_points.copy()
-    while queue:
-        print("Queue Length:", len(queue), end="\r")
-        point = queue.pop(0)
-        if point in outside_points:
-            continue
-        outside_points.append(point)
-        next = neighbors(point)
-        for p in next:
-            if (
-                p.real < 0 - 1
-                or p.real > max_x + 2
-                or p.imag < 0 - 1
-                or p.imag > max_y + 2
-            ):
-                continue
-            if doubled.get(p, ".") == ".":
-                queue.append(p)
-    print()
-    orig_min_x, orig_min_y = (
-        int(min(data, key=lambda x: x.real).real),
-        int(min(data, key=lambda x: x.imag).imag),
-    )
-    orig_max_x, orig_max_y = (
-        int(max(data, key=lambda x: x.real).real),
-        int(max(data, key=lambda x: x.imag).imag),
-    )
-
-    # Figure out how many original points are not reachable from the outside
-
-    # Translate from the original resolution to the doubled resolution
-    original_points = []
-    for y in range(orig_min_y, orig_max_y + 1):
-        for x in range(orig_min_x, orig_max_x + 1):
-            point = complex(x * 2, y * 2)
-            original_points.append(point)
-
-    # Get the values at the original points that are not marked as outside and count how many are "." (not a pipe)
-    i = [doubled.get(p, ".") for p in original_points if p not in outside_points].count(
-        "."
-    )
-
-    return i
+def part2_shoelace(loop):
+    return poly_area(loop) - (perimeter(loop) / 2) + 1
 
 
 @print_timings
@@ -370,15 +186,7 @@ def part_2():
 
     loop_points = map_loop(data, start)
 
-    data[start] = get_shape_of_start(data, start)
-
-    def mapper(point, val):
-        symbol = val
-        if point not in loop_points:
-            symbol = "."
-        return BOXDRAW_CHARACTERS[val] if point in loop_points else symbol
-
-    return get_inside_count(data, loop_points)
+    return part2_shoelace(loop_points)
 
 
 run(part_1, part_2)
