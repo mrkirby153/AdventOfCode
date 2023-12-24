@@ -56,7 +56,34 @@ def part_1():
 
 @print_timings
 def part_2():
-    pass
+    snowflakes = load_input(input_data)
+
+    s = Solver()
+
+    rock_vel_x = Real("rock_vel_x")
+    rock_vel_y = Real("rock_vel_y")
+    rock_vel_z = Real("rock_vel_z")
+
+    rock_pos_x = Real("rock_pos_x")
+    rock_pos_y = Real("rock_pos_y")
+    rock_pos_z = Real("rock_pos_z")
+
+    # We want to find the velocity and position of the rock that will collide with all the snowflakes
+    for i, snowflake in enumerate(snowflakes):
+        t = Real(f"t{i}")
+        s.add(t >= 0)
+        s.add(rock_pos_x + rock_vel_x * t == snowflake.x + snowflake.vx * t)
+        s.add(rock_pos_y + rock_vel_y * t == snowflake.y + snowflake.vy * t)
+        s.add(rock_pos_z + rock_vel_z * t == snowflake.z + snowflake.vz * t)
+    assert s.check() == sat
+
+    model = s.model()
+    print("x", model.evaluate(rock_pos_x))
+    print("y", model.evaluate(rock_pos_y))
+    print("z", model.evaluate(rock_pos_z))
+    return sum(
+        int(str(model.evaluate(pos))) for pos in [rock_pos_x, rock_pos_y, rock_pos_z]
+    )
 
 
 run(part_1, part_2, __name__)
