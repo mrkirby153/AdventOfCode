@@ -22,7 +22,7 @@ def load_input(input_data):
     return snowflakes
 
 
-def get_collision(snowflake1, snowflake2):
+def get_collision(snowflake1, snowflake2, min_pos, max_pos):
     sprint(snowflake1, snowflake2)
     s = Solver()
     t = Real("t")
@@ -30,47 +30,27 @@ def get_collision(snowflake1, snowflake2):
     eq1 = snowflake1.x + snowflake1.vx * t == snowflake2.x + snowflake2.vx * t2
     eq2 = snowflake1.y + snowflake1.vy * t == snowflake2.y + snowflake2.vy * t2
     s.add(eq1, eq2)
-    s.add(t > 0, t2 > 0)  # Collision must happen in the future
-
-    if s.check() != sat:
-        sprint("no collision")
-        return None, None  # No collision
-
-    model = s.model()
-    sprint(model)
-
-    t1 = float(model[t].as_decimal(10).replace("?", ""))
-
-    posx = snowflake1.x + (snowflake1.vx * t1)
-    posy = snowflake1.y + (snowflake1.vy * t1)
-    sprint("Collision at", posx, posy)
-    return (posx, posy)
-
-
-def collide_in_test_area(snowflake1, snowflake2, x_range, y_range):
-    posx, posy = get_collision(snowflake1, snowflake2)
-    if posx is None:
-        return False
-    return (
-        x_range.start <= posx <= x_range.stop and y_range.start <= posy <= y_range.stop
-    )
+    s.add(t >= 0, t2 >= 0)  # Collision must happen in the future
+    s.add(min_pos <= (snowflake1.x + snowflake1.vx * t))
+    s.add(max_pos >= (snowflake1.x + snowflake1.vx * t))
+    s.add(min_pos <= (snowflake1.y + snowflake1.vy * t))
+    s.add(max_pos >= (snowflake1.y + snowflake1.vy * t))
+    return s.check() == sat
 
 
 @print_timings
 def part_1():
     snowflakes = load_input(input_data)
 
-    x_range = (
-        range(7, 27) if parsed_args.sample else range(200000000000000, 400000000000000)
-    )
-    y_range = (
-        range(7, 27) if parsed_args.sample else range(200000000000000, 400000000000000)
+    min_pos, max_pos = (
+        (7, 27) if parsed_args.sample else (200000000000000, 400000000000000)
     )
 
     count = 0
-    for snowflake1, snowflake2 in tqdm(combinations(snowflakes, 2)):
-        if collide_in_test_area(snowflake1, snowflake2, x_range, y_range):
-            count += 1
+    for i in tqdm(range(len(snowflakes)), desc="One"):
+        for j in tqdm(range(i + 1, len(snowflakes)), desc="Two"):
+            if get_collision(snowflakes[i], snowflakes[j], min_pos, max_pos):
+                count += 1
     return count
 
 
